@@ -31,16 +31,16 @@ pwd=$(pwd -P)
 #--model fix fields
 #------------------------------
 if [ $machine == "cray" ]; then
-    FIX_DIR="/gpfs/hps3/emc/global/noscrub/emc.glopara/git/fv3gfs/fix_nco_gfsv16"
+    FIX_DIR="/gpfs/hps3/emc/global/noscrub/emc.glopara/git/fv3gfs/fix"
 elif [ $machine = "dell" ]; then
-    FIX_DIR="/gpfs/dell2/emc/modeling/noscrub/emc.glopara/git/fv3gfs/fix_nco_gfsv16"
+    FIX_DIR="/gpfs/dell2/emc/modeling/noscrub/emc.glopara/git/fv3gfs/fix"
 elif [ $machine = "hera" ]; then
-    FIX_DIR="/scratch1/NCEPDEV/global/glopara/fix_nco_gfsv16"
+    FIX_DIR="/scratch1/NCEPDEV/global/glopara/fix"
 elif [ $machine = "orion" ]; then
-    FIX_DIR="/work/noaa/global/glopara/fix_nco_gfsv16"
+    FIX_DIR="/work/noaa/global/glopara/fix"
 fi
 cd ${pwd}/../fix                ||exit 8
-for dir in fix_am fix_fv3_gmted2010 fix_gldas fix_orog fix_verif fix_wave_gfs ; do
+for dir in fix_aer fix_am fix_chem fix_fv3_gmted2010 fix_gldas fix_lut fix_orog fix_sfc_climo fix_verif fix_wave_gfs ; do
     if [ -d $dir ]; then
       [[ $RUN_ENVIR = nco ]] && chmod -R 755 $dir
       rm -rf $dir
@@ -59,7 +59,7 @@ fi
 cd ${pwd}/../jobs               ||exit 8
     $LINK ../sorc/gfs_post.fd/jobs/JGLOBAL_ATMOS_POST_MANAGER      .
     $LINK ../sorc/gfs_post.fd/jobs/JGLOBAL_ATMOS_NCEPPOST          .
-    $LINK ../sorc/gldas.fd/jobs/JGDAS_ATMOS_GLDAS            .             
+    $LINK ../sorc/gldas.fd/jobs/JGDAS_ATMOS_GLDAS            .
 cd ${pwd}/../parm               ||exit 8
     [[ -d post ]] && rm -rf post
     $LINK ../sorc/gfs_post.fd/parm                           post
@@ -120,7 +120,7 @@ cd ${pwd}/../jobs               ||exit 8
     $LINK ../sorc/gsi.fd/jobs/JGDAS_ENKF_DIAG               .
     $LINK ../sorc/gsi.fd/jobs/JGDAS_ENKF_UPDATE             .
     $LINK ../sorc/gsi.fd/jobs/JGDAS_ENKF_ECEN               .
-    $LINK ../sorc/gsi.fd/jobs/JGDAS_ENKF_SFC                .    
+    $LINK ../sorc/gsi.fd/jobs/JGDAS_ENKF_SFC                .
     $LINK ../sorc/gsi.fd/jobs/JGDAS_ENKF_FCST               .
     $LINK ../sorc/gsi.fd/jobs/JGDAS_ENKF_POST               .
     $LINK ../sorc/gsi.fd/jobs/JGDAS_ATMOS_CHGRES_FORENKF    .
@@ -195,7 +195,22 @@ cd ${pwd}/../ush                ||exit 8
 #--link executables 
 #------------------------------
 
+if [ ! -d $pwd/../exec ]; then mkdir $pwd/../exec ; fi
 cd $pwd/../exec
+
+[[ -s gaussian_sfcanl.exe ]] && rm -f gaussian_sfcanl.exe
+$LINK ../sorc/install/bin/gaussian_sfcanl.x gaussian_sfcanl.exe
+for workflowexec in fbwndgfs gfs_bufr regrid_nemsio supvit syndat_getjtbul \
+    syndat_maksynrc syndat_qctropcy tocsbufr ; do
+  [[ -s $workflowexec ]] && rm -f $workflowexec
+  $LINK ../sorc/install/bin/${workflowexec}.x $workflowexec
+done
+for workflowexec in enkf_chgres_recenter.x enkf_chgres_recenter_nc.x fv3nc2nemsio.x \
+    tave.x vint.x ; do
+  [[ -s $workflowexec ]] && rm -f $workflowexec
+  $LINK ../sorc/install/bin/$workflowexec .
+done
+
 [[ -s global_fv3gfs.x ]] && rm -f global_fv3gfs.x
 $LINK ../sorc/fv3gfs.fd/NEMS/exe/global_fv3gfs.x .
 if [ -d ../sorc/fv3gfs.fd/WW3/exec ]; then # Wave execs
@@ -309,8 +324,10 @@ cd ${pwd}/../sorc   ||   exit 8
     if [ -d ${pwd}/gfs_wafs.fd ]; then 
         $SLINK gfs_wafs.fd/sorc/wafs_awc_wafavn.fd                                              wafs_awc_wafavn.fd
         $SLINK gfs_wafs.fd/sorc/wafs_blending.fd                                                wafs_blending.fd
+        $SLINK gfs_wafs.fd/sorc/wafs_blending_0p25.fd                                           wafs_blending_0p25.fd
         $SLINK gfs_wafs.fd/sorc/wafs_cnvgrib2.fd                                                wafs_cnvgrib2.fd
         $SLINK gfs_wafs.fd/sorc/wafs_gcip.fd                                                    wafs_gcip.fd
+        $SLINK gfs_wafs.fd/sorc/wafs_grib2_0p25.fd                                              wafs_grib2_0p25.fd
         $SLINK gfs_wafs.fd/sorc/wafs_makewafs.fd                                                wafs_makewafs.fd
         $SLINK gfs_wafs.fd/sorc/wafs_setmissing.fd                                              wafs_setmissing.fd
     fi
